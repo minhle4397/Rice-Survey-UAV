@@ -1,0 +1,8 @@
+# External ROS 2 dependencies. Import with:
+#   cd ros2_ws && vcs import src < px4.repos
+# The px4_msgs branch MUST match the PX4 version (here v1.17.0).
+repositories:
+  px4_msgs:
+    type: git
+    url: https://github.com/PX4/px4_msgs.git
+    version: release/1.17

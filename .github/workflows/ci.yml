@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # Detect which parts of the project exist yet, so early commits stay green.
+  detect:
+    runs-on: ubuntu-24.04
+    outputs:
+      ros2: ${{ steps.check.outputs.ros2 }}
+      esp32: ${{ steps.check.outputs.esp32 }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          if find ros2_ws/src -name package.xml | grep -q .; then echo "ros2=true" >> "$GITHUB_OUTPUT"; fi
+          if [ -f esp32_bridge/platformio.ini ]; then echo "esp32=true" >> "$GITHUB_OUTPUT"; fi
+
+  python:
+    name: Python lint and unit tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install tools
+        run: pip install ruff pytest numpy scipy
+      - name: Lint
+        run: ruff check .
+      - name: Unit tests
+        if: hashFiles('**/test_*.py') != ''
+        run: pytest -q -m "not sitl"
+
+  ros2:
+    name: ROS 2 build
+    needs: detect
+    if: needs.detect.outputs.ros2 == 'true'
+    runs-on: ubuntu-24.04
+    container: ros:jazzy
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import dependencies
+        run: |
+          apt-get update && apt-get install -y python3-vcstool
+          cd ros2_ws && vcs import src < px4.repos
+      - name: Build
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          cd ros2_ws
+          rosdep update && rosdep install --from-paths src --ignore-src -y
+          colcon build --event-handlers console_direct+
+      - name: Test
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          cd ros2_ws
+          colcon test --packages-skip px4_msgs && colcon test-result --verbose
+
+  esp32:
+    name: ESP32 firmware build
+    needs: detect
+    if: needs.detect.outputs.esp32 == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install platformio
+      - run: pio run -d esp32_bridge

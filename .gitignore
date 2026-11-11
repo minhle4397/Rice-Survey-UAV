@@ -1,0 +1,31 @@
+# ROS 2 / colcon
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+# Dependencies pulled with vcs (see ros2_ws/px4.repos)
+ros2_ws/src/px4_msgs/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# PlatformIO
+esp32_bridge/.pio/
+esp32_bridge/.vscode/
+
+# Flight data (keep only curated samples in data/samples/)
+*.ulg
+*.mcap
+*.db3
+rosbag2_*/
+results/
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
