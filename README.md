@@ -2,7 +2,7 @@
 
 A quadrotor built on **PX4** and the **Holybro Kakute H7 Mini**, designed to survey rice-seedling density in early growth stages. The drone holds attitude with a cascade PID controller and flies trajectories drawn by the operator, in simulation (PX4 SITL + Gazebo) and on real hardware.
 
-> Graduation project (đồ án tốt nghiệp). Documentation in [`docs/`](docs/) is written in Vietnamese.
+> Personal project. Documentation in [`docs/`](docs/) is written in Vietnamese.
 
 ## Design targets
 
@@ -77,7 +77,7 @@ Wiring: [docs/wiring.md](docs/wiring.md).
 
 ## Progress
 
-- [ ] Phase 0 – Repository and development environment
+- [x] Phase 0 – Repository and development environment
 - [ ] Phase 1 – Custom Gazebo model
 - [ ] Phase 2 – Dynamics model and cascade PID tuning
 - [ ] Phase 3 – Trajectory library and offboard node

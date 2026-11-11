@@ -33,8 +33,10 @@ Thứ tự cổng dưới đây là của **firmware PX4**, khác với Betaflig
 | | RX | **T6** | |
 | | 5V | 5V | |
 | | GND | G | |
-| Caddx Ant | Video | VI | cần VTX ở VO nếu muốn xem hình |
+| Caddx Ant | Video | **VTX – Video In** | nối thẳng vào VTX, không qua VI/VO của FC |
 | | 5V / GND | 5V / G | |
+| VTX analog 5.8 GHz | Power + / GND | B+ / G (pin 3S, qua PDB) | VTX phải nhận được dải 7–26 V |
+| | Video In | dây video của Caddx Ant | |
 | ESC 1–4 | Signal | M1–M4 | xem thứ tự động cơ bên dưới |
 | | GND tín hiệu | G | GND chung với FC |
 | Pin 3S | + / − | B+ / G (qua PDB) | FC đo áp pin qua B+ |
@@ -68,6 +70,25 @@ Gán trong QGroundControl → Vehicle Setup → Actuators. **Luôn tháo cánh k
 ## Lắp la bàn
 
 Đặt QMC5883L xa dây nguồn chính và ESC ít nhất 10 cm (tốt nhất trên cột GPS). Mũi tên trên module hướng về mũi drone; nếu lệch, khai báo `CAL_MAG0_ROT` lúc hiệu chỉnh.
+
+## Video FPV (analog 5.8 GHz)
+
+Firmware PX4 cho Kakute H7 Mini **không có driver OSD (AT7456E) và không có driver điều khiển VTX**. Vì vậy nối camera thẳng vào VTX, không đi qua chân VI/VO của FC. Thông tin bay (pin, độ cao, GPS) xem trên QGroundControl qua ESP32, nên không cần OSD.
+
+```
+Caddx Ant ──video──► VTX 5.8 GHz ──anten RHCP──► )))  ((( ──► Receiver 5.8 GHz ──USB──► Laptop Ubuntu (QGC)
+   ▲ 5V từ FC            ▲ 3S từ PDB
+```
+
+Tiêu chí chọn VTX:
+
+- Nguồn vào nhận được 3S (11.1–12.6 V), ví dụ dải 7–26 V; khi đó cấp thẳng từ pin, không tải lên BEC 5 V của FC.
+- Công suất chọn được 25 / 200 / 400 mW, có nút bấm và đèn hoặc màn hình để đổi kênh (vì PX4 không điều khiển VTX qua SmartAudio/Tramp).
+- Lỗ bắt 20 × 20 mm để xếp tầng cùng Kakute.
+
+**Luôn gắn anten vào VTX trước khi cấp điện**, cấp điện khi chưa có anten sẽ làm cháy tầng phát. Dùng anten RHCP ở cả drone lẫn mặt đất. Trong khu vực thử nghiệm chọn công suất 25–200 mW và tuân thủ quy định tần số tại Việt Nam.
+
+Băng 5.8 GHz không trùng với ELRS và WiFi của ESP32 (cùng ở 2.4 GHz). Nên đặt anten ELRS và anten ESP32 cách nhau ít nhất vài cm, vuông góc nhau.
 
 ## Bộ điều khiển RC đề xuất
 
