@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    rice_uav: 450 mm quadrotor, X configuration.
+
+    Frame convention (Gazebo): x forward, y left, z up.
+    Motor layout (PX4 Quad X):
+        rotor_0 front-right CCW
+        rotor_1 rear-left CCW
+        rotor_2 front-left CW
+        rotor_3 rear-right CW
+    Physical parameters:
+        arm length L        = 0.225 m (450 mm diagonal)
+        motor offset x, y   = L / sqrt(2) = 0.159 m
+        total mass          = 1.3382 kg (estimate; replace with the measured value)
+        max thrust / motor  = 8.3 N (~850 g, 2212 1000KV + 1045 on 3S)
+        max rotor speed     = 838 rad/s (~8000 RPM under load)
+        motor constant kT   = 8.3 / 838^2 = 1.18e-5 N (rad/s)^2
+-->
+<sdf version="1.9">
+    <model name="rice_uav">
+        <!-- Spawn with the landing gear touching the ground. -->
+        <pose>0 0 0.10 0 0 0</pose>
+        <self_collide>false</self_collide>
+        <static>false</static>
+
+        <!-- ============== BODY ============== -->
+        <link name="base_link">
+            <inertial>
+                <!-- Total mass minus 4 propellers (4 x 0.012 kg). -->
+                <mass>1.2902</mass>
+                <inertial>
+                    <ixx>0.0085</ixx>
+                    <ixy>0</ixy>
+                    <ixz>0</ixz>
+                    <iyy>0.0085</iyy>
+                    <iyz>0</iyz>
+                    <izz>0.0165</izz>
+                </inertial>
+            </inertial>
+
+            <!-- Central plate stack: FC, PDB, battery. -->
+            <visual name="body_visual">
+                <geometry><box><size>0.14 0.14 0.04</size></box></geometry>
+                <material>
+                    <ambient>0.15 0.15 0.15 1</ambient>
+                    <diffuse>0.15 0.15 0.15 1</diffuse>
+                </material>
+            </visual>
+
+            <!-- Two diagonal arms, 450 mm motor to motor. -->
+            <visual name="arm_fr_rl_visual">
+                <pose>0 0 0.02 0 0 -0.785398</pose>
+                <geometry><box><size>0.45 0.02 0.01</size></box></geometry>
+                <material>
+                    <ambient>0.85 0.85 0.85 1</ambient>
+                    <diffuse>0.85 0.85 0.85 1</diffuse>
+                </material>
+            </visual>
+            <visual name="arm_fl_rr_visual">
+                <pose>0 0 0.02 0 0 0.785398</pose>
+                <geometry><box><size>0.45 0.02 0.01</size></box></geometry>
+                <material>
+                    <ambient>0.85 0.85 0.85 1</ambient>
+                    <diffuse>0.85 0.85 0.85 1</diffuse>
+                </material>
+            </visual>
+
+            <!-- Red marker on the nose so heading visible. -->
+            <visual name="nose_visual">
+                <pose>0.08 0 0.025 0 0 0</pose>
+                <geometry><box><size>0.03 0.03 0.01</size></box></geometry>
+                <material>
+                    <ambient>0.9 0.1 0.1 1</ambient>
+                    <diffuse>0.9 0.1 0.1 1</diffuse>
+                </material>
+            </visual>
+
+            <!-- Downward-facing camera (visual only). -->
+            <visual name="camera_visual">
+            <pose>0.05 0 -0.03 0 0 0</pose>
+            <geometry><box><size>0.02 0.02 0.02</size></box></geometry>
+            <material>
+                <ambient>0.1 0.3 0.8 1</ambient>
+                <diffuse>0.1 0.3 0.8 1</diffuse>
+            </material>
+            </visual>
+
+            <!-- Landing gear: 4 legs, 8 cm long. -->
+            <visual name="leg_fr_visual">
+                <pose>0.07 -0.07 -0.06 0 0 0</pose>
+                <geometry><cylinder><radius>0.005</radius><length>0.08</length></cylinder></geometry>
+            </visual>
+            <visual name="leg_fl_visual">
+                <pose>0.07 0.07 -0.06 0 0 0</pose>
+                <geometry><cylinder><radius>0.005</radius><length>0.08</length></cylinder></geometry>
+            </visual>
+            <visual name="leg_rl_visual">
+                <pose>0.07 0.07 -0.06 0 0 0</pose>
+                <geometry><cylinder><radius>0.005</radius><length>0.08</length></cylinder></geometry>
+            </visual>
+            <visual name="leg_rr_visual">
+                <pose>-0.07 -0.07 -0.06 0 0 0</pose>
+                <geometry><cylinder><radius>0.005</radius><length>0.08</length></cylinder></geometry>
+            </visual>
+
+            <collision name="body_collision">
+                <geometry><box><size>0.14 0.14 0.04</size></box></geometry>
+            </collision>
+            <!-- Thin plate under the legs: bottom face at  z = -0.10, i.e. on the ground. -->
+            <collision name="landing_gear_collision">
+                <pose>0 0 -0.095 0 0 0</pose>
+                <geometry><box><size>0.16 0.16 0.01</size></box></geometry>
+            </collision>
+        <!-- ================== SENSORS ================== 
+            Sensor names must match what PX4 gz_bridge subscribes to.-->
+            <sensor name="imu_sensor" type="imu">
+                <gz_frame_id>base_link</gz_frame_id>
+                <always_on>1</always_on>
+                <update_rate>250</update_rate>
+                <imu>
+                    <angular_velocity>
+                        <x><noise type="gaussian"><mean>0</mean><stddev>0.0008726646</stddev></noise></x>
+                        <y><noise type="gaussian"><mean>0</mean><stddev>0.0008726646</stddev></noise></y>
+                        <z><noise type="gaussian"><mean>0</mean><stddev>0.0008726646</stddev></noise></z>
+                    </angular_velocity>
+                    <linear_acceleration>
+                        <x><noise type="gaussian"><mean>0</mean><stddev>0.00637</stddev></noise></x>
+                        <y><noise type="gaussian"><mean>0</mean><stddev>0.00637</stddev></noise></y>
+                        <z><noise type="gaussian"><mean>0</mean><stddev>0.00686</stddev></noise></z>
+                    </linear_acceleration>
+                </imu>
+            </sensor>
+
+            <sensor name="air_pressure_sensor" type="air_pressure">
+                <gz_frame_id>base_link</gz_frame_id>
+                <always_on>1</always_on>
+                <update_rate>50</update_rate>
+                <air_pressure>
+                    <pressure><noise type="gaussian"><mean>0</mean><stddev>3</stddev></noise></pressure>
+                </air_pressure>
+            </sensor>
+
+            <sensor name="magnetometer_sensor" type="magnetometer">
+                <gz_frame_id>base_link</gz_frame_id>
+                <always_on>1</always_on>
+                <update_rate>100</update_rate>
+                <magnetometer>
+                    <!-- Units: tesla (PX4 gz_bridge sets use_units_gauss=false). -->
+                    <x><noise type="gaussian"><stddev>3e-7</stddev></noise></x>
+                    <y><noise type="gaussian"><stddev>3e-7</stddev></noise></y>
+                    <z><noise type="gaussian"><stddev>3e-7</stddev></noise></z>
+                </magnetometer>
+            </sensor>
+
+            <sensor name="navsat_sensor" type="navsat">
+                <gz_frame_id>base_link</gz_frame_id>
+                <always_on>1</always_on>
+                <update_rate>30</update_rate>
+            </sensor>
+        </link>
+
+        <!-- ====================== ROTORS ======================
+             10-inch (0.254 m) propeller, 12 g. Disc inertia about the spin axis:
+             Izz = m*D^2/12 = 0.012 * 0.254^2 / 12  = 6.45e-5 kg m^2 -->
+        <link name="rotor_0">
+            <pose>0.159 -0.159 0.05 0 0 0</pose>
+            <inertial>
+                <mass>0.012</mass>
+                <inertia>
+                    <ixx>1e-7</ixx><ixy>0</ixy><ixz>0</ixz>
+                    <iyy>6.45e-5</iyy><iyz>0</iyz><izz>6.45e-5</izz>
+                </inertia>
+            </inertial>
+            <visual name="rotor_0_visual">
+                <geometry><cylinder><radius>0.127</radius><length>0.002</length></cylinder></geometry>
+                <transparency>0.6</transparency>
+                <material><ambient>0.1 0.6 0.1 1</ambient><diffuse>0.1 0.6 0.1 1</diffuse></material>
+            </visual>
+            <collision name="rotor_0_collision">
+                <geometry><box><size>0.254 0.02 0.002</size></box></geometry>
+            </collision>
+        </link>
+        <joint name="rotor_0_joint" type="revolute">
+            <parent>base_link</parent>
+            <child>rotor_0</child>
+            <axis>
+                <xyz>0 0 1</xyz>
+                <limit><lower>-1e16</lower><upper>1e16</upper></limit>
+            </axis>
+        </joint>
+
+        <link name="rotor_1">
+            <pose>-0.159 0.159 0.05 0 0 0</pose>
+            <inertial>
+                <mass>0.012</mass>
+                <inertia>
+                    <ixx>1e-7</ixx><ixy>0</ixy><ixz>0</ixz>
+                    <iyy>6.45e-5</iyy><iyz>0</iyz><izz>6.45e-5</izz>
+                </inertia>
+            </inertial>
+            <visual name="rotor_1_visual">
+                <geometry><cylinder><radius>0.127</radius><length>0.002</length></cylinder></geometry>
+                <transparency>0.6</transparency>
+                <material><ambient>0.1 0.6 0.1 1</ambient><diffuse>0.1 0.6 0.1 1</diffuse></material>
+            </visual>
+                <collision name="rotor_1_collision">
+                    <geometry><box><size>0.254 0.02 0.002</size></box></geometry>
+                </collision>
+        </link>
+        <joint name="rotor_1_joint" type="revolute">
+            <parent>base_link</parent>
+            <child>rotor_1</child>
+            <axis>
+                <xyz>0 0 1</xyz>
+                <limit><lower>-1e16</lower><upper>1e16</upper></limit>
+            </axis>
+        </joint>
+        <link name="rotor_2">
+            <pose>0.159 0.159 0.05 0 0 0</pose>
+            <inertial>
+                <mass>0.012</mass>
+                <inertia>
+                    <ixx>1e-7</ixx><ixy>0</ixy><ixz>0</ixz>
+                    <iyy>6.45e-5</iyy><iyz>0</iyz><izz>6.45e-5</izz>
+                </inertia>
+            </inertial>
+            <visual name="rotor_2_visual">
+                <geometry><cylinder><radius>0.127</radius><length>0.002</length></cylinder></geometry>
+                <transparency>0.6</transparency>
+                <material><ambient>0.8 0.2 0.2 1</ambient><diffuse>0.8 0.2 0.2 1</diffuse></material>
+            </visual>
+                <collision name="rotor_2_collision">
+                    <geometry><box><size>0.254 0.02 0.002</size></box></geometry>
+                </collision>
+        </link>
+        <joint name="rotor_2_joint" type="revolute">
+            <parent>base_link</parent>
+            <child>rotor_2</child>
+            <axis>
+                <xyz>0 0 1</xyz>
+                <limit><lower>-1e16</lower><upper>1e16</upper></limit>
+            </axis>
+        </joint>
+
+        <link name="rotor_3">
+            <pose>-0.159 -0.159 0.05 0 0 0</pose>
+            <inertial>
+                <mass>0.012</mass>
+                <inertia>
+                    <ixx>1e-7</ixx><ixy>0</ixy><ixz>0</ixz>
+                    <iyy>6.45e-5</iyy><iyz>0</iyz><izz>6.45e-5</izz>
+                </inertia>
+            </inertial>
+        <visual name="rotor_3_visual">
+                <geometry><cylinder><radius>0.127</radius><length>0.002</length></cylinder></geometry>
+                <transparency>0.6</transparency>
+                <material><ambient>0.8 0.2 0.2 1</ambient><diffuse>0.8 0.2 0.2 1</diffuse></material>
+        </visual>
+                <collision name="rotor_3_collision">
+                    <geometry><box><size>0.254 0.02 0.002</size></box></geometry>
+                </collision>
+        </link>
+        <joint name="rotor_3_joint" type="revolute">
+            <parent>base_link</parent>
+            <child>rotor_3</child>
+            <axis>
+                <xyz>0 0 1</xyz>
+                <limit><lower>-1e16</lower><upper>1e16</upper></limit>
+            </axis>
+        </joint>
+        
+        <!-- ====================== MOTOR MODELS ======================
+            Thrust F = motorConstant * w^2
+            Yaw torque = momentConstant * F
+            PX4 sends a speed command in [0, maxRotVelocity] on command/motor_speed. -->
+        
+        <plugin filename="gz-sim-multicopter-motor-model-system"
+                name="gz::sim::systems::MulticopterMotorModel">
+            <jointName>rotor_0_joint</jointName>
+            <linkName>rotor_0</linkName>
+            <motorNumber>0</motorNumber>
+            <turningDirection>ccw</turningDirection>
+            <motorType>velocity</motorType>
+            <commandSubTopic>command/motor_speed</commandSubTopic>
+            <maxRotVelocity>838</maxRotVelocity>
+            <motorConstant>1.18e-05</motorConstant>
+            <momentConstant>0.016</momentConstant>
+            <timeConstantUp>0.0125</timeConstantUp>
+            <timeConstantDown>0.025</timeConstantDown>
+            <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
+            <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
+            <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+        </plugin>
+        <plugin filename="gz-sim-multicopter-motor-model-system"
+            name="gz::sim::systems::MulticopterMotorModel">
+             <jointName>rotor_1_joint</jointName>
+            <linkName>rotor_1</linkName>
+            <motorNumber>1</motorNumber>
+            <turningDirection>ccw</turningDirection>
+            <motorType>velocity</motorType>
+            <commandSubTopic>command/motor_speed</commandSubTopic>
+            <maxRotVelocity>838</maxRotVelocity>
+            <motorConstant>1.18e-05</motorConstant>
+            <momentConstant>0.016</momentConstant>
+            <timeConstantUp>0.0125</timeConstantUp>
+            <timeConstantDown>0.025</timeConstantDown>
+            <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
+            <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
+            <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+        </plugin>
+        <plugin filename="gz-sim-multicopter-motor-model-system"
+            name="gz::sim::systems::MulticopterMotorModel">
+            <jointName>rotor_2_joint</jointName>
+            <linkName>rotor_2</linkName>
+            <motorNumber>2</motorNumber>
+            <turningDirection>cw</turningDirection>
+            <motorType>velocity</motorType>
+            <commandSubTopic>command/motor_speed</commandSubTopic>
+            <maxRotVelocity>838</maxRotVelocity>
+            <motorConstant>1.18e-05</motorConstant>
+            <momentConstant>0.016</momentConstant>
+            <timeConstantUp>0.0125</timeConstantUp>
+            <timeConstantDown>0.025</timeConstantDown>
+            <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
+            <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
+            <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+        </plugin>
+        <plugin filename="gz-sim-multicopter-motor-model-system"
+            name="gz::sim::systems::MulticopterMotorModel">
+            <jointName>rotor_3_joint</jointName>
+            <linkName>rotor_3</linkName>
+            <motorNumber>3</motorNumber>
+            <turningDirection>cw</turningDirection>
+            <motorType>velocity</motorType>
+            <commandSubTopic>command/motor_speed</commandSubTopic>
+            <maxRotVelocity>838</maxRotVelocity>
+            <motorConstant>1.18e-05</motorConstant>
+            <momentConstant>0.016</momentConstant>
+            <timeConstantUp>0.0125</timeConstantUp>
+            <timeConstantDown>0.025</timeConstantDown>
+            <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
+            <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
+            <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+        </plugin>
+  </model>
+</sdf>
